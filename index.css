@@ -1,0 +1,162 @@
+/* The landing page: the maps' night-sky background and their bright paper
+   cards, one card per map. */
+:root {
+  --bg: #070b16;
+  --text: #eef6ff;
+  --muted: #9aa8c7;
+  --ui-paper: #fffaf0;
+  --ui-ink: #1d3557;
+  --ui-muted: #6b7a99;
+  --ui-sky: #3a86ff;
+  --ui-pink: #ff5d8f;
+  --ui-sun: #ffbe0b;
+  --ui-font: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ui-font-title: "Baloo 2", "Nunito", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(60rem 40rem at 20% -10%, rgba(58, 134, 255, 0.18), transparent 60%),
+    radial-gradient(50rem 36rem at 90% 110%, rgba(255, 79, 216, 0.14), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--ui-font);
+}
+
+.nsc-map-index {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 56px 16px 40px;
+
+  .index-header {
+    text-align: center;
+  }
+
+  .index-logo {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 8px;
+  }
+
+  .index-title {
+    margin: 0;
+    font-family: var(--ui-font-title);
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.05;
+    background: linear-gradient(90deg, var(--ui-sky), #00b4d8 40%, #ff4fd8 75%, var(--ui-sun));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .index-intro {
+    max-width: 34rem;
+    margin: 12px auto 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .map-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin: 40px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* A paper card like the maps' panels, tinted by its map's colour, that
+     lifts a little under the pointer. */
+  .map-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    height: 100%;
+    padding: 24px 24px 20px;
+    border: 3px solid #fff;
+    border-radius: 24px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--tint) 12%, var(--ui-paper)), var(--ui-paper) 55%);
+    color: var(--ui-ink);
+    text-decoration: none;
+    box-shadow:
+      0 6px 0 color-mix(in srgb, var(--tint) 55%, black),
+      0 14px 30px rgba(0, 0, 0, 0.4);
+    transition:
+      transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-4px);
+    }
+
+    &:active {
+      transform: translateY(3px);
+      box-shadow:
+        0 2px 0 color-mix(in srgb, var(--tint) 55%, black),
+        0 8px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ui-sun);
+      outline-offset: 4px;
+    }
+  }
+
+  .map-icon {
+    width: 96px;
+    height: 96px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.18));
+  }
+
+  .map-name {
+    font-family: var(--ui-font-title);
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .map-about {
+    flex: 1;
+    color: var(--ui-muted);
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .map-open {
+    margin-top: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--tint);
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .index-source {
+    margin: 40px 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+
+    a {
+      color: inherit;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .map-card {
+      transition: none;
+    }
+  }
+}

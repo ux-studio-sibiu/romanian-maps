@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Romanian Maps</title>
+  <meta name="description" content="Interactive maps of Romania drawn from OpenStreetMap: its rivers flowing to the sea, and its power grid." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+  <!-- The front door: one card per map, each opening its own page. -->
+  <main class="nsc-map-index">
+    <header class="index-header">
+      <img class="index-logo" src="favicon.svg" alt="" width="72" height="72" />
+      <h1 class="index-title">Romanian Maps</h1>
+      <p class="index-intro">Explore Romania on interactive maps. Zoom, drag, and switch the layers on and off.</p>
+    </header>
+
+    <ul class="map-list">
+      <li>
+        <a class="map-card" href="rivers/" style="--tint: #3a86ff">
+          <img class="map-icon" src="rivers/favicon.svg" alt="" width="96" height="96" />
+          <span class="map-name">Romania's Rivers</span>
+          <span class="map-about">Every river flowing down to the Danube and the Black Sea, with cities, roads, river basins and the land from space.</span>
+          <span class="map-open">Open the map <span aria-hidden="true">&rarr;</span></span>
+        </a>
+      </li>
+      <li>
+        <a class="map-card" href="electric-grid/" style="--tint: #ff4fd8">
+          <img class="map-icon" src="electric-grid/favicon.svg" alt="" width="96" height="96" />
+          <span class="map-name">Romania's Power Grid</span>
+          <span class="map-about">Power plants as stars and the high-voltage lines between them, with pulses showing which way the power flows.</span>
+          <span class="map-open">Open the map <span aria-hidden="true">&rarr;</span></span>
+        </a>
+      </li>
+    </ul>
+
+    <p class="index-source">Data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+  </main>
+</body>
+</html>
