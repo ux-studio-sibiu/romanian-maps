@@ -1,0 +1,425 @@
+/* One palette, read by both the panel (here) and the canvas (main.js reads
+   these custom properties off the root), so the two cannot drift apart. The
+   three river colours are the ends and middle of the size ramp. */
+:root {
+  --bg: #070b16;
+  /* The flat map, shown with the terrain layer off: Romania, its border line
+     and the neighbouring countries. */
+  --land: #0e1424;
+  --border: #22304f;
+  --neighbour: #141b2d;
+  /* The sea: a deep blue from the river ramp, lit at the coast by --river-mid. */
+  --sea: #0c2656;
+  /* Under the satellite picture and past its edges: the picture's own
+     average land colour at its borders, so where it stops does not show once
+     the veil has dimmed both alike. */
+  --terrain-edge: #30391a;
+  --city: #ffd84d;
+  /* Roads: yellow, motorways green. Within the roads, importance shows in
+     width and strength. */
+  --road: #ffe066;
+  --motorway: #4ade80;
+  /* Everything outside Romania, whatever its layer: how much darker (0-1)
+     and how much greyer (0-1). */
+  --outside-dim: 0.5;
+  --outside-grey: 0.75;
+  --text: #eef6ff;
+  /* River names, and the canvas's keyboard-focus ring. */
+  --accent: #5fd8ff;
+
+  --river-small: #1d3f8f;
+  --river-mid: #2f8cff;
+  --river-large: #b9f3ff;
+
+  /* The interface over the map: bright and friendly, for children. Only the
+     panel and the buttons use these; the map keeps its own colours above. */
+  --ui-paper: #fffaf0;
+  --ui-ink: #1d3557;
+  --ui-muted: #6b7a99;
+  --ui-line: #f1e4c8;
+  --ui-sky: #3a86ff;
+  --ui-sun: #ffbe0b;
+  --ui-pink: #ff5d8f;
+  --ui-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(255, 255, 255, 0.6) inset;
+  --ui-font: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ui-font-title: "Baloo 2", "Nunito", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* The map fills the window; everything else floats over it. */
+.nsc-river-map {
+  position: fixed;
+  inset: 0;
+
+  /* Until the fonts arrive (main.js, at most 1.5 s) the map, panel and
+     buttons stay hidden, so nothing shows in the fallback font first. Then
+     they fade in together as the loader fades out, the map a touch slower. */
+  .map-canvas,
+  .map-panel,
+  .map-controls {
+    transition: opacity 0.6s ease-out 0.15s;
+  }
+
+  .map-canvas {
+    transition-duration: 0.9s;
+  }
+
+  &.is-loading {
+    .map-canvas,
+    .map-panel,
+    .map-controls {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  /* --- The loader: a drop with water flowing across it ---------------------
+     White-blue water in a white ring. Two waves one period wide slide
+     sideways forever; the back one slower and fainter, so the water seems to move. It fades out when loading ends. */
+  .map-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 72px;
+    height: 72px;
+    margin: -36px 0 0 -36px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s, visibility 0.4s;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .ring {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2.5;
+      opacity: 0.85;
+    }
+
+    .wave {
+      animation: loader-flow 1.6s linear infinite;
+    }
+
+    .front {
+      fill: var(--river-large);
+      --wave-y: 34px;
+    }
+
+    .back {
+      fill: #fff;
+      opacity: 0.4;
+      animation-duration: 2.6s;
+      animation-direction: reverse;
+      --wave-y: 31px;
+    }
+  }
+
+  /* A short delay before it fades in, so a fast (cached) load shows no
+     flash of the loader at all. */
+  &.is-loading .map-loader {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0.2s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .map-loader .wave {
+      animation: none;
+      transform: translate(0, var(--wave-y));
+    }
+  }
+
+  .map-canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    /* The canvas handles pinch and drag itself. */
+    touch-action: none;
+    outline: none;
+
+    &.is-dragging {
+      cursor: grabbing;
+    }
+
+    &:focus-visible {
+      box-shadow: inset 0 0 0 2px var(--accent);
+    }
+  }
+
+  /* --- The panel: title, layers, sources ------------------------------------
+     A bright paper card with big round corners, friendly lettering and one
+     colourful icon per layer, made for children: easy to read, easy to tap. */
+  .map-panel {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: min(290px, calc(100% - 32px));
+    /* Room left below for the zoom buttons, bottom left. */
+    max-height: calc(100% - 104px);
+    overflow-y: auto;
+    padding: 18px 18px 14px;
+    border: 3px solid #fff;
+    border-radius: 24px;
+    background: var(--ui-paper);
+    color: var(--ui-ink);
+    box-shadow: var(--ui-shadow);
+    font-family: var(--ui-font);
+  }
+
+  .map-title {
+    margin: 0;
+    font-family: var(--ui-font-title);
+    font-size: clamp(1.5rem, 3.4vw, 1.9rem);
+    font-weight: 800;
+    line-height: 1.1;
+    /* A rainbow of the river blues into the sun. */
+    background: linear-gradient(90deg, var(--ui-sky), #00b4d8 45%, var(--ui-sun));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .layer-list {
+    display: grid;
+    gap: 6px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* One row per layer: its icon in a round badge of its own colour, the name,
+     and a big switch. A hidden layer's row turns pale and its badge grey, so
+     the state reads at a glance. */
+  .layer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px 6px 6px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--tint) 10%, white);
+    font-size: 1rem;
+    font-weight: 800;
+    transition: background 0.2s, opacity 0.2s;
+
+    &.is-hidden {
+      background: #f4efe4;
+      opacity: 0.75;
+
+      .layer-icon {
+        background: #c9c2b3;
+        box-shadow: none;
+      }
+    }
+  }
+
+  .layer-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--tint);
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--tint) 60%, black);
+    transition: background 0.2s;
+
+    svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
+  .layer-name {
+    flex: 1;
+  }
+
+  /* An on/off switch: a pill with a round knob, filled with the layer's
+     colour when on. */
+  .layer-toggle {
+    position: relative;
+    flex: none;
+    width: 48px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #d9d2c3;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    .knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    &[aria-pressed="true"] {
+      background: var(--tint);
+
+      .knob {
+        transform: translateX(20px);
+      }
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ui-sun);
+      outline-offset: 2px;
+    }
+  }
+
+  .map-source {
+    margin: 14px 0 0;
+    padding-top: 10px;
+    border-top: 2px dashed var(--ui-line);
+    color: var(--ui-muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+    line-height: 1.45;
+
+    a {
+      color: var(--ui-sky);
+    }
+  }
+
+  /* --- Zoom buttons: big, round, bright, with a little bounce ------------- */
+  /* Bottom left, side by side, under the panel. */
+  .map-controls {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    display: flex;
+    gap: 10px;
+
+    /* Shaded like the layer badges: a solid darker lip below, from the
+       button's own colour, and a soft shadow on the map. Not the panel's
+       shadow, whose inset white highlight showed as a pale crescent under
+       the rim of a round button. The + and - are drawn, not typed, so they
+       sit dead centre whatever the font. */
+    button {
+      --face: var(--ui-sky);
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      padding: 0;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      background: var(--face);
+      cursor: pointer;
+      box-shadow:
+        0 4px 0 color-mix(in srgb, var(--face) 65%, black),
+        0 8px 18px rgba(0, 0, 0, 0.35);
+      transition:
+        transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.15s;
+
+      svg {
+        width: 24px;
+        height: 24px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+      }
+
+      &.zoom-in {
+        --face: var(--ui-sky);
+      }
+
+      &.zoom-out {
+        --face: var(--ui-pink);
+      }
+
+      &:hover {
+        transform: translateY(-1px) scale(1.06);
+      }
+
+      /* Pressed: it sinks onto its lip. */
+      &:active {
+        transform: translateY(3px);
+        box-shadow:
+          0 1px 0 color-mix(in srgb, var(--face) 65%, black),
+          0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--ui-sun);
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  /* Phones: a smaller card and smaller buttons, the map gets the room. */
+  @media (max-width: 600px) {
+    .map-panel {
+      padding: 12px 12px 10px;
+      border-radius: 18px;
+    }
+
+    .map-source {
+      display: none;
+    }
+
+    .layer-item {
+      font-size: 0.9rem;
+    }
+
+    .map-controls button {
+      width: 44px;
+      height: 44px;
+
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+/* One wave period (32 units) to the left: the shape lines up again, so the
+   loop has no seam. The y offset is set per wave through --wave-y. */
+@keyframes loader-flow {
+  from {
+    transform: translate(0, var(--wave-y));
+  }
+
+  to {
+    transform: translate(-32px, var(--wave-y));
+  }
+}

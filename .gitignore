@@ -1,0 +1,9 @@
+# Overpass API answers cached by scripts/fetch-data.mjs (tens of MB).
+# Re-running the script fetches them again; the built data/ files are kept.
+**/scripts/.cache/
+
+# OS and editor clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

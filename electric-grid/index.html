@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Romania's Power Grid</title>
+  <meta name="description" content="Romania's power plants and 220/400 kV lines, drawn as a neon constellation from OpenStreetMap data. Zoom and pan for detail." />
+  <!-- Rounded, friendly lettering for the panel; the page falls back to the system font offline. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="nsc-grid-map is-loading">
+    <!-- Shown while the page loads: a spark running round a ring. Fades out
+         once the map is ready (main.js removes is-loading). -->
+    <div class="map-loader" role="status" aria-label="Loading the map">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle class="track" cx="32" cy="32" r="26" />
+        <g class="spark"><circle cx="32" cy="6" r="4.5" /></g>
+        <path class="bolt" d="M35 17 24 34h8l-3 13 11-17h-8Z" />
+      </svg>
+    </div>
+
+    <canvas class="map-canvas" tabindex="0" aria-label="Map of Romania's power plants and high-voltage lines, with pulses showing the modelled direction of power flow. Scroll or pinch to zoom, drag or use the arrow keys to move, 0 to reset."></canvas>
+
+    <section class="map-panel">
+      <h1 class="map-title">Romania's Power Grid</h1>
+
+      <ul class="layer-list" aria-label="Layers">
+        <li class="layer-item" data-layer-row="plants" style="--tint: #ffb703">
+          <span class="layer-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6l-5.4 2.9 1.2-6-4.5-4.2 6.1-.7Z" /></svg>
+          </span>
+          <span class="layer-name">Power plants</span>
+          <button type="button" class="layer-toggle" data-layer="plants" aria-pressed="true" aria-label="Show power plants"><span class="knob"></span></button>
+          <!-- The plant types, in the plants row: the map's colour key, and
+               each one can be switched off on its own. -->
+          <div class="source-list" role="group" aria-label="Plant types">
+            <button type="button" class="source-chip" data-source="nuclear" aria-pressed="true" style="--c: var(--nuclear)"><span class="dot"></span>Nuclear</button>
+            <button type="button" class="source-chip" data-source="hydro" aria-pressed="true" style="--c: var(--hydro)"><span class="dot"></span>Hydro</button>
+            <button type="button" class="source-chip" data-source="wind" aria-pressed="true" style="--c: var(--wind)"><span class="dot"></span>Wind</button>
+            <button type="button" class="source-chip" data-source="solar" aria-pressed="true" style="--c: var(--solar)"><span class="dot"></span>Solar</button>
+            <button type="button" class="source-chip" data-source="coal" aria-pressed="true" style="--c: var(--coal)"><span class="dot"></span>Coal</button>
+            <button type="button" class="source-chip" data-source="gas" aria-pressed="true" style="--c: var(--gas)"><span class="dot"></span>Gas</button>
+            <button type="button" class="source-chip" data-source="other" aria-pressed="true" style="--c: var(--other)"><span class="dot"></span>Other</button>
+          </div>
+        </li>
+        <li class="layer-item" data-layer-row="kv400" style="--tint: #ff4fd8">
+          <span class="layer-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2 7 22" /><path d="m12 2 5 20" /><path d="M4 6h16" /><path d="M8.5 10h7" /><path d="M7.5 15h9" /></svg>
+          </span>
+          <span class="layer-name">400 kV lines</span>
+          <button type="button" class="layer-toggle" data-layer="kv400" aria-pressed="true" aria-label="Show 400 kV lines"><span class="knob"></span></button>
+        </li>
+        <li class="layer-item" data-layer-row="kv220" style="--tint: #6f63ff">
+          <span class="layer-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 4 8.5 21" /><path d="M12 4l3.5 17" /><path d="M6 8h12" /><path d="M9.5 13h5" /></svg>
+          </span>
+          <span class="layer-name">220 kV lines</span>
+          <button type="button" class="layer-toggle" data-layer="kv220" aria-pressed="true" aria-label="Show 220 kV lines"><span class="knob"></span></button>
+        </li>
+        <li class="layer-item" data-layer-row="flow" style="--tint: #00b4d8">
+          <span class="layer-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z" /></svg>
+          </span>
+          <span class="layer-name">Power flow</span>
+          <button type="button" class="layer-toggle" data-layer="flow" aria-pressed="true" aria-label="Show the power flow"><span class="knob"></span></button>
+        </li>
+      </ul>
+
+      <p class="map-source">Data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.<br />Boundary: Natural Earth.</p>
+    </section>
+
+    <div class="map-controls" role="group" aria-label="Zoom">
+      <button type="button" class="zoom-in" data-zoom="in" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>
+      <button type="button" class="zoom-out" data-zoom="out" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg></button>
+    </div>
+  </main>
+
+  <script src="data/grid.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
